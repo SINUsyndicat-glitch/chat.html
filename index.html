@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>منصة SINU Syndicate - التطبيق الكامل</title>
+    <!-- مكتبة المحفظة الأساسية -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="text/javascript"></script>
     <style>
         body {
@@ -163,16 +164,14 @@
         </div>
     </div>
 
-    <!-- ================= نافذة غرف الدردشة التفاعلية ================= -->
+    <!-- ================= نافذة غرف الدردشة ================= -->
     <div id="chatModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <div id="chatTargetName" style="font-weight: bold; font-size: 18px;">المحادثة</div>
                 <button class="close-btn" onclick="closeModal('chatModal')">✕</button>
             </div>
-            <div class="chat-body" id="chatBody">
-                <!-- الرسائل يتم توليدها هنا تلقائياً -->
-            </div>
+            <div class="chat-body" id="chatBody"></div>
             <div class="chat-footer">
                 <input type="text" class="chat-input" id="chatInput" placeholder="اكتب رسالتك هنا...">
                 <button class="action-btn" style="background-color: #38bdf8;" onclick="sendMessage()">إرسال</button>
@@ -198,21 +197,18 @@
         </div>
     </div>
 
+    <!-- ================= الأكواد البرمجية والربط الفعلي للمحفظة ================= -->
     <script>
-                          let userWalletAddress = "";
+        let userWalletAddress = "";
         let currentGirl = "";
 
-        // ⚙️ إعدادات الـ Web3 والتوكن الخاص بك
-        const sinuContractAddress = "0x56bB247c424958948B63de291A0C7f45d8651B76"; 
-        const destinationWallet = "0x2ab674e0c793327fb19B724Cd340421429aE6c1d"; 
-        const chatPrice = "1000
-            ";   // سعر فتح الدردشة (مثلاً 10 توكن)
-        const wheelPrice = "50";  // سعر تدوير العجلة (مثلاً 500 توكن)
+        // ⚙️ إعدادات الـ Web3 (استبدل هذه العناوين بعناوينك الحقيقية)
+        const sinuContractAddress = "0x0000000000000000000000000000000000000000"; // عنوان عقد توكن SINU هنا
+        const destinationWallet = "0x0000000000000000000000000000000000000000";   // محفظة استقبال الأرباح هنا
+        const chatPrice = "10";   // تكلفة فتح الشات (10 توكن)
+        const wheelPrice = "50";  // تكلفة اللعب بالعجلة (50 توكن)
 
-        // الـ ABI الأساسي للتحويل عبر البلوكشين
-        const erc20Abi = [
-            "function transfer(address to, uint256 amount) returns (bool)"
-        ];
+        const erc20Abi = ["function transfer(address to, uint256 amount) returns (bool)"];
 
         const automatedReplies = [
             "أهلاً بك! يسعدني جداً التعرف عليك، هل تتابع عملات الميم وتوكن $SINU مؤخراً؟",
@@ -229,7 +225,6 @@
             else { document.getElementById('gamesSection').classList.add('active'); }
         }
 
-        // ربط المحفظة
         async function connectWallet() {
             if (typeof window.ethereum !== 'undefined') {
                 try {
@@ -241,54 +236,40 @@
                     btn.innerText = "متصل: " + shortAddress;
                     btn.style.backgroundColor = "#22c55e";
                     btn.style.color = "#ffffff";
-                } catch (error) { alert("فشل ربط المحفظة"); }
+                } catch (error) { alert("فشل ربط المحفظة."); }
             } else { alert("لم يتم العثور على محفظة كربيتو! يرجى تثبيت MetaMask."); }
         }
 
-        // 🔥 الدالة السحرية: خصم التوكن حقيقياً من البلوكشين قبل أي خطوة
+        // دالة خصم التوكن الحقيقي من الشبكة البلوكشين
         async function requestSinuPayment(amountInTokens) {
             if (!userWalletAddress) {
                 alert("يرجى ربط محفظتك أولاً عبر زر Connect Wallet!");
                 return false;
             }
-
             try {
                 const provider = new ethers.providers.Web3Provider(window.ethereum);
                 const signer = provider.getSigner();
-                
-                // الاتصال بعقد توكن $SINU
                 const contract = new ethers.Contract(sinuContractAddress, erc20Abi, signer);
-                
-                // تحويل القيمة إلى صيغة الـ Wei (أخذ الـ 18 خانة عشرية بعين الاعتبار)
                 const amount = ethers.utils.parseUnits(amountInTokens.toString(), 18);
                 
-                alert(`ستقوم الآن بدفع ${amountInTokens} $SINU لفتح هذه الميزة. يرجى تأكيد المعاملة في محفظتك...`);
-                
-                // إرسال معاملة الـ Transfer الحقيقية على الشبكة
+                alert(`تنبيه: سيتم خصم ${amountInTokens} $SINU لفتح الميزة. وافق على المعاملة بمحفظتك...`);
                 const tx = await contract.transfer(destinationWallet, amount);
-                
-                // انتظار تأكيد المعاملة على بلوكشين Base
-                await tx.wait();
-                
-                return true; // المعاملة نجحت وتم الدفع فعلياً!
+                await tx.wait(); // انتظار تأكيد الشبكة
+                return true; 
             } catch (error) {
-                console.error("فشلت المعاملة أو رفضها المستخدم:", error);
-                alert("فشلت المعاملة! يجب إتمام الدفع لتتمكن من الدخول.");
+                console.error(error);
+                alert("فشلت المعاملة أو تم إلغاؤها. يرجى الدفع للمتابعة!");
                 return false;
             }
         }
 
-        // ================= فتح الشات بعد الدفع الحقيقي =================
         async function openChat(name) {
-            // طلب دفع قيمة الشات أولاً
             const paymentSuccess = await requestSinuPayment(chatPrice);
-            if (!paymentSuccess) return; // إذا لم يدفع لن يفتح الشات
+            if (!paymentSuccess) return;
 
             currentGirl = name;
             document.getElementById('chatTargetName').innerText = "محادثة مع " + name;
-            document.getElementById('chatBody').innerHTML = `
-                <div class="message msg-girl">شكراً لثقتك ودعمك لـ $SINU! تم فتح الشات بنجاح 🚀 أنا ${name}، كيف يمكنني مساعدتك؟</div>
-            `;
+            document.getElementById('chatBody').innerHTML = `<div class="message msg-girl">شكراً لك! تم الدفع وفتح الشات بنجاح 🚀 أنا ${name}، كيف حالك؟</div>`;
             document.getElementById('chatModal').style.display = "flex";
         }
 
@@ -313,10 +294,9 @@
             }, 1200);
         }
 
-        document.getElementById('chatInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') sendMessage(); });
         function closeModal(id) { document.getElementById(id).style.display = "none"; }
 
-        // ================= فتح لعبة العجلة بعد الدفع الحقيقي =================
+        // ================= عجلة الحظ بقماش Canvas =================
         const sectors = [
             {label: "10 $SINU", color: "#f43f5e"}, {label: "حظ أوفر", color: "#334155"},
             {label: "50 $SINU", color: "#38bdf8"}, {label: "20 $SINU", color: "#e2e8f0"},
@@ -325,9 +305,8 @@
         let canvas, ctx, arc, isSpinning = false;
 
         async function openWheelGame() {
-            // طلب دفع قيمة تدوير العجلة أولاً
             const paymentSuccess = await requestSinuPayment(wheelPrice);
-            if (!paymentSuccess) return; // إذا لم يدفع لن تفتح اللعبة
+            if (!paymentSuccess) return;
 
             document.getElementById('wheelModal').style.display = "flex";
             document.getElementById('wheelResult').innerText = "";
@@ -373,14 +352,13 @@
             rotate();
         }
 
-        async function startQuiz() {
+        function startQuiz() {
             if (!userWalletAddress) { alert("يرجى ربط محفظتك أولاً!"); return; }
             let answer = prompt("مسابقة سريعة:\nماهي العملة الرقمية الأولى في العالم؟");
             if (answer && (answer.trim().toLowerCase() === "بيتكوين" || answer.trim().toLowerCase() === "bitcoin" || answer.trim().toLowerCase() === "btc")) {
                 alert("🎉 إجابة صحيحة! تم تسجيل محفظتك بنجاح.");
             } else { alert("❌ إجابة خاطئة."); }
         }
-  
     </script>
 </body>
 </html>
